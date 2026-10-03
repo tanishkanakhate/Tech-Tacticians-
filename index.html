@@ -1,28 +1,86 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PhishGuard</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhishGuard – Intelligent Phishing URL Detection</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;color:#222}
-input{width:100%;padding:12px;font-size:16px;border:1px solid #bbb;border-radius:8px;box-sizing:border-box}
-button{margin-top:10px;padding:10px 20px;font-size:16px;border:0;border-radius:8px;background:#5b4ee0;color:#fff;cursor:pointer}
-.badge{display:inline-block;padding:6px 16px;border-radius:20px;color:#fff;font-weight:700;font-size:20px}
-.Legitimate{background:#1a9b4b}.Suspicious{background:#e08a00}.Phishing{background:#d62839}
-.bar{height:10px;background:#eee;border-radius:5px;margin:12px 0}.bar div{height:100%;border-radius:5px}
-li{margin:8px 0}.pts{float:right;font-weight:700}
-</style></head><body>
-<h2>🛡️ PhishGuard – URL Analyzer</h2>
-<input id="u" placeholder="Paste a link, e.g. http://paypa1.com/login">
-<button onclick="scan()">Analyze</button>
-<div id="out"></div>
+:root{--bg:#0b1020;--card:rgba(255,255,255,.06);--bd:rgba(255,255,255,.12);--tx:#e8ecff;--mut:#9aa4c7;--g:#22c55e;--y:#f59e0b;--r:#ef4444;--p:#7c6cff}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--tx);min-height:100vh;
+background:radial-gradient(900px 500px at 10% -10%,#3b2fb0 0,transparent 60%),radial-gradient(800px 500px at 100% 0,#0e7490 0,transparent 55%),var(--bg)}
+.wrap{max-width:860px;margin:0 auto;padding:28px 16px 60px}
+h1{margin:0;font-size:30px}h1 span{background:linear-gradient(90deg,#a78bfa,#38bdf8);-webkit-background-clip:text;color:transparent}
+.sub{color:var(--mut);margin:6px 0 22px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tab{padding:9px 16px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--mut);cursor:pointer;font-weight:600}
+.tab.on{background:var(--p);color:#fff;border-color:transparent}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:20px;backdrop-filter:blur(10px);margin-bottom:16px}
+input,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid var(--bd);background:rgba(0,0,0,.3);color:var(--tx);font-size:16px;font-family:inherit}
+textarea{min-height:110px;resize:vertical}
+.btn{margin-top:12px;padding:12px 22px;border:0;border-radius:12px;background:linear-gradient(90deg,#7c6cff,#38bdf8);color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+.chips{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}.chip{font-size:13px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);cursor:pointer;color:var(--mut)}
+.res{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.gauge{position:relative;width:140px;height:140px;flex:none}.gauge svg{transform:rotate(-90deg)}
+.gauge b{position:absolute;inset:0;display:grid;place-items:center;font-size:34px}
+.badge{display:inline-block;padding:6px 16px;border-radius:999px;font-weight:800;font-size:18px}
+.Legitimate{background:rgba(34,197,94,.18);color:#4ade80}.Suspicious{background:rgba(245,158,11,.18);color:#fbbf24}.Phishing{background:rgba(239,68,68,.2);color:#f87171}
+.host{color:var(--mut);word-break:break-all;margin:8px 0}
+.f{display:flex;gap:12px;padding:12px;border-radius:12px;background:rgba(0,0,0,.22);margin-top:8px;animation:in .4s both}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.f .pt{min-width:48px;text-align:center;font-weight:800;border-radius:8px;padding:6px 0;background:rgba(124,108,255,.25);height:fit-content}
+.f small{color:var(--mut)}.fb{margin-top:12px;font-size:13px;color:var(--mut)}.fb a{color:#93c5fd;cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.stat{padding:16px;border-radius:14px;background:rgba(0,0,0,.25);text-align:center}.stat b{display:block;font-size:28px}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;border-top:1px solid var(--bd);word-break:break-all}
+.sum{margin:16px 0 8px;font-size:16px;line-height:1.5}
+.calc{padding:12px;border-radius:12px;background:rgba(0,0,0,.25);font-size:14px;margin-bottom:10px}
+.seg{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin:8px 0 4px}
+.seg i{background:linear-gradient(90deg,#7c6cff,#38bdf8)}
+.f .why{margin-top:6px;font-size:13px;color:#c7d2fe}
+.hide{display:none}
+</style></head><body><div class="wrap">
+<h1>🛡️ <span>PhishGuard</span></h1>
+<p class="sub">Intelligent phishing URL detection with explainable scoring, lookalike catching and warnings where you meet links.</p>
+<div class="tabs"><div class="tab on" data-t="url">🔗 Scan URL</div><div class="tab" data-t="msg">💬 Scan Message</div><div class="tab" data-t="bench">📊 Accuracy</div><div class="tab" data-t="hist">🕘 History</div></div>
+
+<div id="url" class="pane"><div class="card"><input id="u" placeholder="Paste a link, e.g. http://paypa1.com/login">
+<button class="btn" onclick="scanUrl()">Analyze</button>
+<div class="chips" id="chips"></div></div><div id="out"></div></div>
+
+<div id="msg" class="pane hide"><div class="card"><textarea id="m" placeholder="Paste an SMS / WhatsApp / email text. All links inside are scanned."></textarea>
+<button class="btn" onclick="scanMsg()">Scan message</button>
+<div class="chips"><span class="chip" onclick="sample()">Try sample scam SMS</span></div></div><div id="mout"></div></div>
+
+<div id="bench" class="pane hide"><div class="card"><div id="bout">Loading…</div></div></div>
+<div id="hist" class="pane hide"><div class="card"><div id="hout"></div></div></div>
+</div>
 <script>
-async function scan(){
-  const url=document.getElementById('u').value; if(!url) return;
-  const r=await (await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})})).json();
-  const col={Legitimate:'#1a9b4b',Suspicious:'#e08a00',Phishing:'#d62839'}[r.verdict];
-  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  document.getElementById('out').innerHTML=
-   `<p><span class="badge ${r.verdict}">${r.verdict}</span> Risk score: <b>${r.score}/100</b></p>
-    <div class="bar"><div style="width:${r.score}%;background:${col}"></div></div>
-    <h4>Why this verdict</h4><ul>`+r.factors.map(f=>`<li><span class="pts">+${f.points}</span><b>${esc(f.name)}</b><br><small>${esc(f.detail)}</small></li>`).join('')+`</ul>`;
-}
-document.getElementById('u').addEventListener('keydown',e=>{if(e.key==='Enter')scan()});
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const COL={Legitimate:'#22c55e',Suspicious:'#f59e0b',Phishing:'#ef4444'};
+const post=(u,b)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+["http://paypa1.com/login","https://amaz0n-support.top","https://sbi.co.in.kyc-update.top","https://www.amazon.in","https://hdfc-bank-secure-login.xyz/verify","https://xn--pypal-4ve.com"]
+ .forEach(s=>$('chips').insertAdjacentHTML('beforeend',`<span class="chip" onclick="$('u').value='${s}';scanUrl()">${s}</span>`));
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+ document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hide',p.id!==t.dataset.t));
+ if(t.dataset.t==='bench')bench(); if(t.dataset.t==='hist')hist();});
+$('u').addEventListener('keydown',e=>e.key==='Enter'&&scanUrl());
+function gauge(s,v){const c=COL[v],C=2*Math.PI*58;return `<div class="gauge"><svg width="140" height="140"><circle cx="70" cy="70" r="58" stroke="rgba(255,255,255,.1)" stroke-width="12" fill="none"/><circle cx="70" cy="70" r="58" stroke="${c}" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="${C*s/100} ${C}" style="transition:stroke-dasharray 1s"/></svg><b>${s}</b></div>`}
+function card(r){
+ const tot=r.factors.reduce((a,f)=>a+f.points,0)||1;
+ const rule={Legitimate:'below 30',Suspicious:'30 to 59',Phishing:'60 or more'}[r.verdict];
+ return `<div class="card"><div class="res">${gauge(r.score,r.verdict)}<div><span class="badge ${r.verdict}">${r.verdict}</span>
+ <div class="host">${esc(r.host)}</div><div>Risk score ${r.score}/100</div></div></div>
+ <p class="sum">${esc(r.summary||'')}</p>
+ <div class="calc"><b>How the score was calculated:</b> ${esc(r.formula||r.score)}<br>
+ Score ${rule} means <b>${r.verdict}</b> (under 30 Legitimate, 30 to 59 Suspicious, 60+ Phishing)</div>
+ <div class="seg">${r.factors.filter(f=>f.points).map(f=>`<i style="width:${100*f.points/tot}%" title="${esc(f.name)}"></i>`).join('')}</div>
+ <h4>Why this verdict</h4>${r.factors.map((f,i)=>`<div class="f" style="animation-delay:${i*70}ms"><div class="pt">+${f.points}</div><div><b>${esc(f.name)}</b>${f.points?` <small>(${Math.round(100*f.points/tot)}% of the risk)</small>`:''}<br><small>${esc(f.detail)}</small>${f.why?`<div class="why">💡 ${esc(f.why)}</div>`:''}</div></div>`).join('')}
+ <div class="fb">Wrong verdict? <a onclick='fb(${JSON.stringify(r.url)},"${r.verdict}")'>Report it</a></div></div>`}
+async function scanUrl(){const url=$('u').value.trim();if(!url)return;$('out').innerHTML=card(await post('/api/analyze',{url}))}
+async function scanMsg(){const text=$('m').value;if(!text)return;const d=await post('/api/message',{text});
+ $('mout').innerHTML=d.count?`<div class="card"><span class="badge ${d.overall}">Message is ${d.overall}</span> &nbsp; ${d.count} link(s) found</div>`+d.results.map(card).join(''):'<div class="card">No links found in this message.</div>'}
+function sample(){$('m').value="Dear customer, your SBI YONO account is blocked. Complete KYC now: http://sbi-yono-kyc.icu/verify-otp or visit https://www.sbi.co.in for help."}
+async function fb(url,verdict){await post('/api/feedback',{url,verdict});alert('Thanks! Feedback saved to improve the rules.')}
+async function bench(){const d=await (await fetch('/api/benchmark')).json();
+ $('bout').innerHTML=`<div class="stats"><div class="stat"><b>${d.accuracy}%</b>Exact accuracy</div><div class="stat"><b>${d.phish_caught}</b>Phishing caught</div><div class="stat"><b>${d.genuine_wrongly_flagged_phishing}</b>Genuine wrongly flagged</div><div class="stat"><b>${d.total}</b>Test URLs</div></div>
+ <table>${d.rows.map(r=>`<tr><td>${r.ok?'✅':'❌'}</td><td>${esc(r.url)}</td><td>${r.truth}</td><td><span class="badge ${r.verdict}" style="font-size:12px;padding:3px 10px">${r.verdict} ${r.score}</span></td></tr>`).join('')}</table>`}
+async function hist(){const h=await (await fetch('/api/history')).json();
+ $('hout').innerHTML=h.length?`<table>${h.map(r=>`<tr><td>${r.time}</td><td>${esc(r.url)}</td><td><span class="badge ${r.verdict}" style="font-size:12px;padding:3px 10px">${r.verdict} ${r.score}</span></td></tr>`).join('')}</table>`:'No scans yet.'}
 </script></body></html>
