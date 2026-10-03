@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhishGuard</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;color:#222}
+input{width:100%;padding:12px;font-size:16px;border:1px solid #bbb;border-radius:8px;box-sizing:border-box}
+button{margin-top:10px;padding:10px 20px;font-size:16px;border:0;border-radius:8px;background:#5b4ee0;color:#fff;cursor:pointer}
+.badge{display:inline-block;padding:6px 16px;border-radius:20px;color:#fff;font-weight:700;font-size:20px}
+.Legitimate{background:#1a9b4b}.Suspicious{background:#e08a00}.Phishing{background:#d62839}
+.bar{height:10px;background:#eee;border-radius:5px;margin:12px 0}.bar div{height:100%;border-radius:5px}
+li{margin:8px 0}.pts{float:right;font-weight:700}
+</style></head><body>
+<h2>🛡️ PhishGuard – URL Analyzer</h2>
+<input id="u" placeholder="Paste a link, e.g. http://paypa1.com/login">
+<button onclick="scan()">Analyze</button>
+<div id="out"></div>
+<script>
+async function scan(){
+  const url=document.getElementById('u').value; if(!url) return;
+  const r=await (await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})})).json();
+  const col={Legitimate:'#1a9b4b',Suspicious:'#e08a00',Phishing:'#d62839'}[r.verdict];
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  document.getElementById('out').innerHTML=
+   `<p><span class="badge ${r.verdict}">${r.verdict}</span> Risk score: <b>${r.score}/100</b></p>
+    <div class="bar"><div style="width:${r.score}%;background:${col}"></div></div>
+    <h4>Why this verdict</h4><ul>`+r.factors.map(f=>`<li><span class="pts">+${f.points}</span><b>${esc(f.name)}</b><br><small>${esc(f.detail)}</small></li>`).join('')+`</ul>`;
+}
+document.getElementById('u').addEventListener('keydown',e=>{if(e.key==='Enter')scan()});
+</script></body></html>
