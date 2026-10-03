@@ -111,15 +111,7 @@ def get_sample_urls():
     }), 200
 
 
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    """Health check endpoint to verify backend status."""
-    return jsonify({
-        "status": "healthy",
-        "service": "PhishGuard",
-        "version": "1.0.0",
-        "model_loaded": classifier.model is not None
-    }), 200
+
 
 
 if \_\_name\_\_ == "\_\_main\_\_":
